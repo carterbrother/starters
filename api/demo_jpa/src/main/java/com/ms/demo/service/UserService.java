@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserService {
@@ -16,6 +17,7 @@ public class UserService {
     private UserRepository userRepository;
 
 
+    @Transactional
     public User saveUser(User user) {
         return userRepository.save(user);
     }
