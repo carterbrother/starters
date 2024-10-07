@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/layui-src/dist/css/layui.css">
+    <script src="https://cdn.jsdelivr.net/npm/layui-src/dist/layui.all.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body>
+<div class="layui-container">
+    <h1>User Management</h1>
+    <form class="layui-form" id="userForm">
+        <input type="hidden" id="userId">
+        <div class="layui-form-item">
+            <label class="layui-form-label">Name</label>
+            <div class="layui-input-block">
+                <input type="text" name="name" required placeholder="Enter name" class="layui-input" id="name">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Email</label>
+            <div class="layui-input-block">
+                <input type="email" name="email" required placeholder="Enter email" class="layui-input" id="email">
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <button type="button" class="layui-btn" id="createUser">Create User</button>
+        </div>
+    </form>
+
+    <table class="layui-hide" id="userTable" lay-filter="userTableFilter"></table>
+    <script type="text/html" id="actionTpl">
+        <button class="layui-btn layui-btn-xs" lay-event="edit">Edit</button>
+        <button class="layui-btn layui-btn-danger layui-btn-xs" lay-event="delete">Delete</button>
+    </script>
+</div>
+
+<script>
+    layui.use(['table', 'jquery'], function () {
+        var table = layui.table;
+        var $ = layui.$;
+
+        // 初始化表格
+        var userTable = table.render({
+            elem: '#userTable',
+            url: '/users/all',
+            method: 'POST',
+            cols: [[
+                { field: 'id', title: 'ID', width: 100, sort: true },
+                { field: 'name', title: 'Name', width: 200 },
+                { field: 'email', title: 'Email', width: 200 },
+                { title: 'Action', toolbar: '#actionTpl', width: 200 }
+            ]],
+            page: true,
+            limit: 10,
+        });
+
+        // 创建用户
+        $('#createUser').click(function () {
+            const userId = $('#userId').val();
+            const user = {
+                id: userId ? parseInt(userId) : null,
+                name: $('#name').val(),
+                email: $('#email').val()
+            };
+
+            const url = userId ? "/users/update" : "/users/create";
+
+            $.ajax({
+                type: "POST",
+                url: url,
+                contentType: "application/json",
+                data: JSON.stringify(user),
+                success: function () {
+                    table.reload('userTable'); // 刷新表格
+                    $('#userForm')[0].reset(); // 重置表单
+                    $('#userId').val(''); // 清空用户ID
+                },
+                error: function () {
+                    alert("Error saving user");
+                }
+            });
+        });
+
+        // 监听表格操作
+        table.on('tool(userTableFilter)', function (obj) {
+            var data = obj.data;
+            if (obj.event === 'edit') {
+                $('#userId').val(data.id);
+                $('#name').val(data.name);
+                $('#email').val(data.email);
+            } else if (obj.event === 'delete') {
+                $.ajax({
+                    type: "POST",
+                    url: "/users/delete",
+                    data: { id: data.id },
+                    success: function () {
+                        table.reload('userTable'); // 刷新表格
+                    },
+                    error: function () {
+                        alert("Error deleting user");
+                    }
+                });
+            }
+        });
+    });
+</script>
+</body>
+
+</html>
